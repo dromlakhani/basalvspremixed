@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Type 2 Diabetes - Insulin Selection Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1976d2;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+        .result-box.basal {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+        }
+        .result-box.premixed {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .calculations {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Type 2 Diabetes - Insulin Selection Guide</h1>
+        <h2>Dr. Om J Lakhani</h2>
+        
+        <div class="info-box">
+            <strong>Important Note:</strong>
+            <p>This tool is specifically designed for Type 2 Diabetes patients who require insulin initiation. 
+            It helps determine whether basal insulin or premixed/coformulation insulin would be more appropriate 
+            based on the patient's glycemic parameters.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="fbs">Fasting Blood Sugar (mg/dL):</label>
+            <input type="number" id="fbs" required>
+        </div>
+
+        <div class="form-group">
+            <label for="pp2bs">Post Prandial Blood Sugar (mg/dL):</label>
+            <input type="number" id="pp2bs" required>
+        </div>
+
+        <div class="form-group">
+            <label for="hba1c">HbA1c (%):</label>
+            <input type="number" id="hba1c" step="0.1" required>
+        </div>
+
+        <button onclick="calculateInsulinType()">Determine Insulin Type</button>
+
+        <div id="results" class="result"></div>
+    </div>
+
+    <script>
+        function whichInsulin(fbs, hba1c, pp2bs) {
+            const ratio = fbs / hba1c;
+            const delta = pp2bs - fbs;
+            
+            if (ratio > 20 && delta < 100) {
+                return "Basal insulin";
+            } else {
+                return "Premixed / Coformulation insulin";
+            }
+        }
+
+        function calculateInsulinType() {
+            // Get input values
+            const fbs = parseFloat(document.getElementById('fbs').value);
+            const pp2bs = parseFloat(document.getElementById('pp2bs').value);
+            const hba1c = parseFloat(document.getElementById('hba1c').value);
+
+            // Validate inputs
+            if (isNaN(fbs) || isNaN(pp2bs) || isNaN(hba1c)) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="result-box" style="background-color: #ffebee; border-left: 4px solid #c62828;">' +
+                    '<strong>Error:</strong> Please fill in all values with valid numbers.</div>';
+                return;
+            }
+
+            if (hba1c === 0) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="result-box" style="background-color: #ffebee; border-left: 4px solid #c62828;">' +
+                    '<strong>Error:</strong> HbA1c cannot be zero.</div>';
+                return;
+            }
+
+            // Calculate insulin type
+            const insulinType = whichInsulin(fbs, hba1c, pp2bs);
+            const ratio = (fbs / hba1c).toFixed(1);
+            const delta = (pp2bs - fbs).toFixed(1);
+
+            // Create result message
+            let resultHTML = `
+                <div class="result-box ${insulinType.includes('Basal') ? 'basal' : 'premixed'}">
+                    <h3>Recommended Insulin Type:</h3>
+                    <h2>${insulinType}</h2>
+                    <div class="calculations">
+                        <strong>Calculations:</strong><br>
+                        • FBS/HbA1c ratio = ${ratio} (threshold: 20)<br>
+                        • PP2BS - FBS difference = ${delta} mg/dL (threshold: 100 mg/dL)
+                    </div>
+                    <p><strong>Interpretation:</strong><br>`;
+
+            if (insulinType.includes('Basal')) {
+                resultHTML += `
+                    The patient's blood sugar profile shows predominantly fasting hyperglycemia 
+                    (high FBS/HbA1c ratio) with relatively small post-meal excursions 
+                    (small difference between PP2BS and FBS). Basal insulin would be appropriate 
+                    to target the fasting hyperglycemia.`;
+            } else {
+                resultHTML += `
+                    The patient's blood sugar profile shows significant post-meal excursions 
+                    and/or relatively lower fasting glucose contribution. Premixed or coformulation 
+                    insulin would be appropriate to target both fasting and post-prandial hyperglycemia.`;
+            }
+
+            resultHTML += `</p></div>`;
+
+            document.getElementById('results').innerHTML = resultHTML;
+        }
+    </script>
+</body>
+</html>
